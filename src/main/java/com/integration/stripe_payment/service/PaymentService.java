@@ -31,6 +31,7 @@ public class PaymentService {
 
       String idepotency = request.getName()+ "_" + request.getAmount()+ System.currentTimeMillis()/1000;
         Optional<Payment> existing = repo.findByIdepotency(idepotency);
+
         if (existing.isPresent()){
             return StripeResponse.builder()
                     .mensage("Existing payment")
@@ -52,6 +53,7 @@ public class PaymentService {
             payment.setQuantity(request.getQuantity());
             payment.setName(request.getName());
             payment.setStatus(PaymentStatus.APROVADO);
+
             payment.setIdepotency(idepotency);
 
 

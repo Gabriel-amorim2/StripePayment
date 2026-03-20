@@ -21,12 +21,9 @@ public class WenbhookController {
     }
 
     @PostMapping("/stripe")
-    public ResponseEntity<String> handleStripeEvent(@RequestBody String payload,
-                                                    @RequestHeader("Stripe-Signature") String sigHeader) {
+    public ResponseEntity<String> handleStripeEvent(@RequestBody String payload,@RequestHeader("Stripe-Signature") String sigHeader) {
         String endpointSecret = "";
-
         Event event;
-
         try {
             event = Webhook.constructEvent(
                     payload, sigHeader, endpointSecret
@@ -37,9 +34,7 @@ public class WenbhookController {
 
 
         switch (event.getType()) {
-            case "checkout.session.completed":
-                CompletedCheckoutSession(event);
-                break;
+
             case "payment_intent.succeeded":
                 PaymentSucceeded(event);
                 break;
@@ -53,23 +48,13 @@ public class WenbhookController {
         return ResponseEntity.ok("Recieved");
     }
 
-    private void CompletedCheckoutSession(Event event) {
-        Session session = (Session) event.getDataObjectDeserializer()
-                .getObject().orElseThrow();
 
-
-        paymentRepository.findBySessionUrl(session.getId())
-                .ifPresent(payment -> {
-                    payment.setStatus(PaymentStatus.APROVADO);
-                    paymentRepository.save(payment);
-                });
-    }
 
     private void PaymentSucceeded(Event event) {
         PaymentIntent pi = (PaymentIntent) event.getDataObjectDeserializer()
                 .getObject().orElseThrow();
 
-        // Procurar pelo paymentIntentId
+
         paymentRepository.findBySessionUrl(pi.getId())
                 .ifPresent(payment -> {
                     payment.setStatus(PaymentStatus.APROVADO);
@@ -88,5 +73,5 @@ public class WenbhookController {
                 });
     }
 
-    }
+}
 
