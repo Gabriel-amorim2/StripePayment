@@ -1,11 +1,8 @@
 package com.integration.stripe_payment.model;
 
 
-import com.stripe.model.checkout.Session;
 import jakarta.persistence.*;
 import lombok.Data;
-
-import java.util.UUID;
 
 @Data
 @Entity
@@ -26,7 +23,6 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
-
 
 
     @Column(unique = true)

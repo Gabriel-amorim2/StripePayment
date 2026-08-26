@@ -5,7 +5,6 @@ import com.integration.stripe_payment.dto.StripeResponse;
 import com.integration.stripe_payment.model.Payment;
 import com.integration.stripe_payment.repository.RepositoryPayment;
 import com.integration.stripe_payment.service.PaymentService;
-import com.stripe.exception.StripeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +13,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/product/v1")
 public class ProductController {
 
-    private PaymentService stripeService;
-    private RepositoryPayment repositoryPayment;
+    private final PaymentService stripeService;
+    private final RepositoryPayment repositoryPayment;
 
     public ProductController(PaymentService stripeService, RepositoryPayment repositoryPayment) {
         this.stripeService = stripeService;
@@ -23,7 +22,7 @@ public class ProductController {
     }
 
     @PostMapping("/chekcout")
-    public ResponseEntity<StripeResponse> checkout(@RequestBody PaymantRequest request) throws StripeException {
+    public ResponseEntity<StripeResponse> checkout(@RequestBody PaymantRequest request) {
         StripeResponse response = stripeService.createPayment(request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -34,6 +33,5 @@ public class ProductController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
 
 }

@@ -17,9 +17,9 @@ import java.util.Optional;
 @Service
 public class PaymentService {
 
-    private ParamsBuilder params;
-    private StripeService stripeService;
-    private RepositoryPayment repo;
+    private final ParamsBuilder params;
+    private final StripeService stripeService;
+    private final RepositoryPayment repo;
 
     public PaymentService(ParamsBuilder params, StripeService stripeService, RepositoryPayment repo) {
         this.params = params;
@@ -30,6 +30,8 @@ public class PaymentService {
     public StripeResponse createPayment(PaymantRequest request) {
 
       String idepotency = request.getName()+ "_" + request.getAmount()+ System.currentTimeMillis()/1000;
+
+
         Optional<Payment> existing = repo.findByIdepotency(idepotency);
 
         if (existing.isPresent()){
@@ -47,13 +49,11 @@ public class PaymentService {
 
             Payment payment = new Payment();
             payment.setSessionId(session.getId());
-            payment.setPaymentIntentId(session.getPaymentIntent());
             payment.setAmount(request.getAmount());
             payment.setCorrecy(request.getCorrecy());
             payment.setQuantity(request.getQuantity());
             payment.setName(request.getName());
-            payment.setStatus(PaymentStatus.APROVADO);
-
+            payment.setStatus(PaymentStatus.PENDENTE);
             payment.setIdepotency(idepotency);
 
 
@@ -61,23 +61,22 @@ public class PaymentService {
 
 
             return StripeResponse.builder()
-                    .status(PaymentStatus.APROVADO)
+                    .status(PaymentStatus.PENDENTE)
                     .mensage("Sessão de pagamento criada")
                     .sesionID(session.getId())
                     .sessionUrl(session.getUrl())
                     .build();
 
         } catch (StripeException e) {
-            Payment payment= new Payment();
+            Payment payment = new Payment();
             payment.setAmount(request.getAmount());
             payment.setCorrecy(request.getCorrecy());
             payment.setName(request.getName());
-            payment.setStatus(PaymentStatus.RECUSADO);
+
 
             repo.save(payment);
 
             return StripeResponse.builder()
-                    .status(PaymentStatus.RECUSADO)
                     .mensage("Erro ao criar sessão: " + e.getMessage())
                     .build();
         }
