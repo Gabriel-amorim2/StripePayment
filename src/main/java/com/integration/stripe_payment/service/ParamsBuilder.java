@@ -5,10 +5,12 @@ import com.stripe.exception.StripeException;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class ParamsBuilder {
 
-    public SessionCreateParams params(PaymantRequest request) throws StripeException {
+    public SessionCreateParams params(PaymantRequest request, UUID paymentId) throws StripeException {
         SessionCreateParams.LineItem.PriceData.ProductData productData = SessionCreateParams.LineItem.PriceData.ProductData.builder()
                 .setName(request.getName())
                 .build();
@@ -29,6 +31,7 @@ public class ParamsBuilder {
                 .setSuccessUrl("http://localhost:8080/success")
                 .setCancelUrl("http://localhost:8080/cancel")
                 .addLineItem(lineItem)
+                .putMetadata("payment_id", paymentId.toString())
                 .build();
 
 

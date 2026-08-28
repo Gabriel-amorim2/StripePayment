@@ -5,11 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Repository
 public interface RepositoryPayment extends JpaRepository<Payment,Long>{
     Optional<Payment> findByIdepotency(String idepotency);
-    Optional<Payment> findByPaymentIntentId(String paymentIntentId);
+    Optional<Payment> findById(UUID id);
 
 }

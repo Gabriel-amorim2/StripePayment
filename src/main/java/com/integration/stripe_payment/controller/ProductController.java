@@ -13,17 +13,17 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/product/v1")
 public class ProductController {
 
-    private final PaymentService stripeService;
+    private final PaymentService paymentService;
     private final RepositoryPayment repositoryPayment;
 
     public ProductController(PaymentService stripeService, RepositoryPayment repositoryPayment) {
-        this.stripeService = stripeService;
+        this.paymentService = stripeService;
         this.repositoryPayment = repositoryPayment;
     }
 
     @PostMapping("/chekcout")
-    public ResponseEntity<StripeResponse> checkout(@RequestBody PaymantRequest request) {
-        StripeResponse response = stripeService.createPayment(request);
+    public ResponseEntity<StripeResponse> checkout(@RequestParam String indepotency, @RequestBody PaymantRequest request) {
+        StripeResponse response = paymentService.createPayment(request, indepotency);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

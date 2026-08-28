@@ -2,16 +2,23 @@ package com.integration.stripe_payment.model;
 
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
-@Data
+import java.util.UUID;
+
+
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Payment {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID id;
 
     private String sessionId;
+    @Column(length = 2000)
     private String sessionUrl;
     private String paymentIntentId;
 
@@ -19,7 +26,7 @@ public class Payment {
     private String name;
     private Long quantity;
     private String correcy;
-    private String callbackUrl;
+
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;

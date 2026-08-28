@@ -18,12 +18,17 @@ public class WenbhookController {
     @PostMapping("/stripe")
     public ResponseEntity<String> handleStripeEvent(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) {
         try {
-            webhookService.eventStripe(payload, sigHeader);
+            webhookService.processWebhookEvent(payload, sigHeader);
             return ResponseEntity.ok("Stripe successful");
         }catch (ErroEvent e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }
 
+    }
+    @PostMapping("/cancelSession/{paymentId}")
+    public ResponseEntity<String> cancelSession(@PathVariable String paymentId) {
+            webhookService.cancelPayment(paymentId);
+            return ResponseEntity.ok("Cancel successful");
     }
 
 }

@@ -6,7 +6,6 @@ import com.stripe.net.RequestOptions;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
 
 @Service
 public class StripeService {
