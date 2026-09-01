@@ -1,6 +1,6 @@
 package com.integration.stripe_payment.controller;
 
-import com.integration.stripe_payment.exception.ErroEvent;
+
 import com.integration.stripe_payment.service.WebhookService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,14 +17,10 @@ public class WenbhookController {
 
     @PostMapping("/stripe")
     public ResponseEntity<String> handleStripeEvent(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) {
-        try {
             webhookService.processWebhookEvent(payload, sigHeader);
             return ResponseEntity.ok("Stripe successful");
-        }catch (ErroEvent e){
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-
     }
+
     @PostMapping("/cancelSession/{paymentId}")
     public ResponseEntity<String> cancelSession(@PathVariable String paymentId) {
             webhookService.cancelPayment(paymentId);

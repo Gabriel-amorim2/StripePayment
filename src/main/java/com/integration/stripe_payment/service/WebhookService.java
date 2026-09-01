@@ -1,10 +1,10 @@
 package com.integration.stripe_payment.service;
 
-import com.integration.stripe_payment.exception.ErroEvent;
-import com.integration.stripe_payment.exception.EventDataDeserializationException;
+import com.integration.stripe_payment.exception.*;
 import com.integration.stripe_payment.model.PaymentStatus;
 import com.integration.stripe_payment.repository.RepositoryPayment;
 import com.stripe.exception.EventDataObjectDeserializationException;
+import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
@@ -33,10 +33,10 @@ public class WebhookService {
         Event event;
         try {
             event = Webhook.constructEvent(
-                    payload, sigHeader, endpointSecret
-            );
-        } catch (Exception e) {
-            throw new ErroEvent(e.getMessage());
+                    payload, sigHeader, endpointSecret);
+
+        } catch (SignatureVerificationException e) {
+            throw new ErrorEvent("assinatura do webhook invalida", e);
         }
 
         EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
@@ -44,32 +44,28 @@ public class WebhookService {
         {
             try {
                 return dataObjectDeserializer.deserializeUnsafe();
-            } catch (EventDataDeserializationException | EventDataObjectDeserializationException e) {
-                throw new RuntimeException("Falha ao desserializar payload do Stripe", e);
+            } catch (EventDataObjectDeserializationException e) {
+                throw new EventDataDeserializationException("Falha ao desserializar payload do Stripe", e);
             }});
 
         switch (event.getType()) {
             case "checkout.session.completed" -> {
                 if (stripeObject instanceof Session session) {
-                    checkoutSuccess(session);
+                   atualizarStatusPagamento( checkoutSuccess(session), PaymentStatus.APROVADO);
                 }
             }
             case "payment_intent.payment_failed" -> {
                 if (stripeObject instanceof PaymentIntent paymentIntent) {
-                    paymentFailed(paymentIntent);
+                  atualizarStatusPagamento(paymentFailed(paymentIntent), PaymentStatus.RECUSADO);
                 }
 
             }
             case "checkout.session.expired" -> {
                 if (stripeObject instanceof Session session) {
-                    String paymentIdStr = session.getMetadata() != null
-                            ? session.getMetadata().get("payment_id")
-                            : null;
-
-                    atualizarStatusPagamento(paymentIdStr, PaymentStatus.CANCELADO);
+                   atualizarStatusPagamento(checkoutSuccess(session), PaymentStatus.CANCELADO);
                 }
             }
-            default -> System.out.println("Evento não tratado: " + event.getType());
+            default -> throw new Unaddressedevent("Evento Stripe não tratado");
         }
     }
 
@@ -78,28 +74,33 @@ public class WebhookService {
             Session session = Session.retrieve(sessionId);
             session.expire();
         } catch (StripeException e) {
-            throw new RuntimeException("Erro ao expirar a sessão de checkout no Stripe",e);
+            throw new ErrorCancelEpayment("Erro ao expirar a sessão de checkout no Stripe",e);
         }
     }
 
 
-    private void checkoutSuccess(Session session) {
-        String paymentIdStr = session.getMetadata() != null ? session.getMetadata().get("payment_id") : null;
-        atualizarStatusPagamento(paymentIdStr, PaymentStatus.APROVADO);
+    private String checkoutSuccess(Session session) {
+       return session.getMetadata() != null ? session.getMetadata().get("payment_id") : null;
+
     }
 
-    private void paymentFailed(PaymentIntent paymentIntent) {
-        String paymentIdStr = paymentIntent.getMetadata() != null ? paymentIntent.getMetadata().get("payment_id") : null;
-        atualizarStatusPagamento(paymentIdStr, PaymentStatus.RECUSADO);
+    private String paymentFailed(PaymentIntent paymentIntent) {
+      return paymentIntent.getMetadata() != null ? paymentIntent.getMetadata().get("payment_id") : null;
+
     }
 
     private void atualizarStatusPagamento(String paymentIdStr, PaymentStatus status) {
         if (paymentIdStr != null && !paymentIdStr.isBlank()) {
-            paymentRepository.findById(UUID.fromString(paymentIdStr))
-                    .ifPresent(payment -> {
-                        payment.setStatus(status);
-                        paymentRepository.save(payment);
-                    });
+            try {
+                paymentRepository.findById(UUID.fromString(paymentIdStr))
+                        .ifPresent(payment -> {
+                            payment.setStatus(status);
+                            paymentRepository.save(payment);
+                        });
+            }catch (NullPointerException e){
+                throw new PaymentNotFound("Erro ao tentar atualizar o status do pagamento na base de dados", e);
+            }
+
         }
     }
 }

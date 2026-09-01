@@ -5,6 +5,7 @@ import com.integration.stripe_payment.dto.StripeResponse;
 import com.integration.stripe_payment.model.Payment;
 import com.integration.stripe_payment.repository.RepositoryPayment;
 import com.integration.stripe_payment.service.PaymentService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class ProductController {
     }
 
     @PostMapping("/chekcout")
-    public ResponseEntity<StripeResponse> checkout(@RequestParam String indepotency, @RequestBody PaymantRequest request) {
+    public ResponseEntity<StripeResponse> checkout(@Valid @RequestParam String indepotency, @RequestBody PaymantRequest request) {
         StripeResponse response = paymentService.createPayment(request, indepotency);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
